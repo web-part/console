@@ -1,4 +1,4 @@
-const Args = require('./Console/Args');
+const Emitter = require('@definejs/emitter');
 const File = require('./Console/File');
 const Origin = require('./Console/Origin');
 
@@ -22,9 +22,12 @@ class Console {
     constructor(config) {
         config = Object.assign({}, config);
 
+        let emitter = new Emitter(this);
+
         let meta = {
             'id': `Console-${idCounter++}`,
             'file': config.file,
+            'emitter': emitter,
             'this': this,
         };
 
@@ -46,6 +49,15 @@ class Console {
     //id = ''
     //file = ''
 
+    /**
+    * 绑定事件。
+    * 已重载 on({...}); 批量绑定。
+    * 已重载 on(name, fn); 单个绑定。
+    */
+    on(...args) {
+        let meta = mapper.get(this);
+        meta.emitter.on(...args);
+    }
 
     /**
     * 写入消息内容到文件中。
@@ -58,8 +70,28 @@ class Console {
     */
     write(name, msg, time) {
         let meta = mapper.get(this);
-        msg = Args.stringify(msg);
-        return File.write(meta.file, name, msg, time);
+        let { file, emitter, } = meta;
+        let item = File.write(file, name, msg, time);
+
+        if (item === undefined) {
+            return;
+        }
+
+        //有实际写入文件，则触发各种事件。
+
+        //此时 item = { time, name, msg, };
+        if (item) {
+            emitter.fire('add', name, [item]);
+            emitter.fire('add', [item]);
+        }
+        //此时 item = '';
+        else {
+            emitter.fire('clear', []);
+        }
+
+        emitter.fire('change', [item]);
+
+        return item;
     }
 
     /**

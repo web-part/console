@@ -18,6 +18,15 @@ module.exports = exports = {
     Console,
 
     file: '',
+
+    /**
+    * 绑定事件。
+    * 已重载 on({...}); 批量绑定。
+    * 已重载 on(name, fn); 单个绑定。
+    */
+    on(...args) {
+        return invoke('on', ...args);
+    },
     
     /**
     * 写入消息到文件中。

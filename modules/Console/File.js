@@ -1,5 +1,6 @@
 
 const File = require('@definejs/file');
+const Args = require('./File/Args');
 
 
 module.exports = {
@@ -9,7 +10,7 @@ module.exports = {
     * 已重载 write(file, name, msg, time);      //写入指定的消息到文件中。
     * @param {string} file 必选，文件名。 
     * @param {string} name 必选，消息的名称。 只能是 `log|error|warn|info`。
-    * @param {string} msg 必选，消息的内容。 
+    * @param {string|Array} msg 必选，消息的内容。 可以是一个数组。
     * @param {number} time 可选，时间戳。
     * @returns { time, name, msg, }
     */
@@ -21,10 +22,11 @@ module.exports = {
         //未指定，则清空。
         if (!name) {
             File.write(file, '', null);
-            return;
+            return '';
         }
     
         time = time || Date.now();
+        msg = Args.stringify(msg);
 
         let item = { time, name, msg, };
         let json = JSON.stringify(item);  //避免换行。 因为换行在 sse 的格式里有特殊含义。
