@@ -1,6 +1,6 @@
 # @webpart/console
 
-在原生 console 的基础上增加输出日志到指定文件里。
+在原生 console 的基础上增加输出日志到指定文件里的功能。
 
 
 `npm install @webpart/console`

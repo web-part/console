@@ -1,7 +1,7 @@
 {
   "name": "@webpart/console",
   "version": "2.1.0",
-  "description": "",
+  "description": "在原生 console 的基础上增加输出日志到指定文件里的功能。",
   "main": "index.js",
   "scripts": {},
   "keywords": [],
