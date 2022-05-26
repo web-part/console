@@ -21,7 +21,7 @@ module.exports = {
 
         //未指定，则清空。
         if (!name) {
-            File.write(file, '', null);
+            File.write(file, '');
             return '';
         }
     
@@ -32,7 +32,7 @@ module.exports = {
         let json = JSON.stringify(item);  //避免换行。 因为换行在 sse 的格式里有特殊含义。
         let line = json + '\n';
 
-        File.append(file, line, null);
+        File.append(file, line);
 
         return item;
     },
