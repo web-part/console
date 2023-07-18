@@ -1,7 +1,6 @@
 const Emitter = require('@definejs/emitter');
-const File = require('./Console/File');
-const Origin = require('./Console/Origin');
-
+const Database = require('./Console/Database');
+const Raw = require('./Console/Raw');
 
 
 const mapper = new Map();
@@ -15,39 +14,38 @@ class Console {
     * 构造器。
     * @param {object} config 
     *   config = {
-    *       file: '',       //要保存到的文件路径，如 `./output/console.log`。
+    *       dir: '',        //要保存到的文件路径，如 `./output/console/`。
     *       clear: false,   //如果目标文件已存在，是否清空里面的内容。
     *   };
     */
     constructor(config) {
         config = Object.assign({}, config);
 
+        let { dir, clear, } = config;
+        let db = dir ? new Database(dir) : null;
         let emitter = new Emitter(this);
+        let id = `Console-${idCounter++}`;
 
         let meta = {
-            'id': `Console-${idCounter++}`,
-            'file': config.file,
-            'emitter': emitter,
+            id,
+            db,
+            emitter,
             'this': this,
         };
 
         mapper.set(this, meta);
 
         //暴露只读的属性。
-        Object.assign(this, {
-            'id': meta.id,
-            'file': meta.file,
-        });
+        Object.assign(this, { id, });
 
         //指定了要清空已存在的文件。
-        if (config.clear && meta.file) {
-            this.write('');
+        if (clear && db) {
+            db.clear();
         }
         
     }
 
     //id = ''
-    //file = ''
 
     /**
     * 绑定事件。
@@ -60,57 +58,75 @@ class Console {
     }
 
     /**
-    * 写入消息内容到文件中。
-    * 已重载 write();                   //清空文件的内容，如果存在。
-    * 已重载 write(name, msg, time);    //写入指定的消息到文件中。
-    * @param {string} name 必选，消息的名称。 只能是 `log|error|warn|info`。
-    * @param {string|Array} msg 必选，消息的内容。 可以是一个数组。
-    * @param {number} time 可选，时间戳。
-    * @returns { time, name, msg, }
+    * 获取统计信息。
+    * @returns {}
+    *   如果不存在，则返回 undefined。
     */
-    write(name, msg, time) {
+    stat() { 
         let meta = mapper.get(this);
-        let { file, emitter, } = meta;
-        let item = File.write(file, name, msg, time);
+        let { db, } = meta;
 
-        if (item === undefined) {
+        if (!db) {
             return;
         }
 
-        //有实际写入文件，则触发各种事件。
+        return db.stat();
+    }
+    
 
-        //此时 item = { time, name, msg, };
-        if (item) {
-            emitter.fire('add', name, [item]);
-            emitter.fire('add', [item]);
-        }
-        //此时 item = '';
-        else {
-            emitter.fire('clear', []);
+    /**
+    * 读取指定日期中的日志列表。
+    * @param {string} date 必选，要读取的日期。
+    * @param {string} [type] 可选，要过滤出来的类型。
+    * @returns {Array} 返回日志列表。
+    *   如果不存在，则返回 undefined。
+    */
+    read(date, type) {
+        let meta = mapper.get(this);
+        let { db, } = meta;
+
+        if (!db) {
+            return;
         }
 
+        let list = db.read(date, type);
+        return list;
+    }
+
+    /**
+    * 写入消息内容到文件中。
+    * @param {string} type 必选，消息的类型，只能是 `log|error|warn|info`。
+    * @param {string|Array} args 必选，消息的内容，可以是一个数组。
+    * @returns { time, type, msg, }
+    */
+    write(type, args) {
+        let meta = mapper.get(this);
+        let { db, emitter, } = meta;
+
+        if (!db) {
+            return;
+        }
+
+        let item = db.add(type, args);
+
+        emitter.fire('add', type, [item]);
+        emitter.fire('add', [item]);
         emitter.fire('change', [item]);
 
         return item;
     }
 
     /**
-    * 读取文件中的日志列表。
-    * @param {string} [name] 可选，要过滤出来的名称。
-    * @returns {Array} 返回日志列表。
-    */
-    read(name) {
-        let meta = mapper.get(this);
-        return File.read(meta.file, name);
-    }
-
-    /**
-    * 清空。
-    * 包括清空文件中的内容。
+    * 清空整个数据库。
     */
     clear() {
-        Origin.call('clear');
-        return this.write('');
+        let meta = mapper.get(this);
+        Raw.call('clear');
+
+        meta.db.clear();
+        emitter.fire('change', []);
+        emitter.fire('clear', []);
+        
     }
 
     /**
@@ -118,7 +134,7 @@ class Console {
     * @param  {...any} args 
     */
     log(...args) {
-        Origin.call('log', args);
+        Raw.call('log', args);
         return this.write('log', args);
     }
 
@@ -127,7 +143,7 @@ class Console {
     * @param  {...any} args
     */
     error(...args) {
-        Origin.call('error', args);
+        Raw.call('error', args);
         return this.write('error', args);
     }
 
@@ -136,7 +152,7 @@ class Console {
     * @param  {...any} args
     */
     warn(...args) {
-        Origin.call('warn', args);
+        Raw.call('warn', args);
         return this.write('warn', args);
     }
 
@@ -145,7 +161,7 @@ class Console {
     * @param  {...any} args
     */
     info(...args) {
-        Origin.call('info', args);
+        Raw.call('info', args);
         return this.write('info', args);
     }
 

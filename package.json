@@ -1,6 +1,6 @@
 {
   "name": "@webpart/console",
-  "version": "2.1.1",
+  "version": "3.0.2",
   "description": "在原生 console 的基础上增加输出日志到指定文件里的功能。",
   "main": "index.js",
   "scripts": {},
@@ -13,6 +13,7 @@
     "url": "https://github.com/web-part/console.git"
   },
   "dependencies": {
+    "@definejs/date": "^1.1.0",
     "@definejs/emitter": "^1.1.0",
     "@definejs/file": "^2.0.1"
   }

@@ -7,7 +7,7 @@ let console = null;
 
 function invoke(name, ...args) {
     console = console || new Console({
-        'file': exports.file,
+        'dir': exports.defaults.dir,
     });
 
     return console[name](...args);
@@ -17,42 +17,51 @@ function invoke(name, ...args) {
 module.exports = exports = {
     Console,
 
-    file: '',
+    defaults: {
+        dir: '',
+    },
 
     /**
     * 绑定事件。
-    * 已重载 on({...}); 批量绑定。
-    * 已重载 on(name, fn); 单个绑定。
     */
     on(...args) {
         return invoke('on', ...args);
     },
+
+    /**
+    * 获取统计信息。
+    * @returns {}
+    *   如果不存在，则返回 undefined。
+    */
+    stat() { 
+        return invoke('stat');
+    },
     
+   
     /**
-    * 写入消息到文件中。
-    * 已重载 write();                   //清空文件的内容，如果存在。
-    * 已重载 write(name, msg, time);    //写入指定的消息到文件中。
-    * @param {string} name 必选，消息的名称。 只能是 `log|error|warn|info`。
-    * @param {string|Array} msg 必选，消息的内容。 可以是一个数组。
-    * @param {number} time 可选，时间戳。
-    * @returns { time, name, msg, }
-    */
-    write(name, msg, time) {
-        return invoke('write', name, msg, time);
-    },
-
-    /**
-    * 读取文件中的日志列表。
-    * @param {string} [name] 可选，要过滤出来的名称。
+    * 读取指定日期中的日志列表。
+    * @param {string} date 必选，要读取的日期。
+    * @param {string} [type] 可选，要过滤出来的类型。
     * @returns {Array} 返回日志列表。
+    *   如果不存在，则返回 undefined。
     */
-    read(name) {
-        return invoke('read', name);
+    read(date, type) {
+        return invoke('read', date, type);
     },
 
     /**
-    * 清空。
-    * 包括清空文件中的内容。
+    * 写入消息内容到文件中。
+    * @param {string} type 必选，消息的类型，只能是 `log|error|warn|info`。
+    * @param {string|Array} args 必选，消息的内容，可以是一个数组。
+    * @returns { time, type, msg, }
+    */
+    write(type, args) {
+        return invoke('write', type, args);
+    },
+
+
+    /**
+    * 清空整个数据库。
     */
     clear() {
         return invoke('clear');
